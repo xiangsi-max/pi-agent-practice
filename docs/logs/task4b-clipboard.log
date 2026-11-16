@@ -1,0 +1,49 @@
+## 任务四B 主路径：剪贴板粘贴（Alt+V），不是 @ 文件引用
+作业原文要求：「先截取图片内容到剪贴板，不要只复制图片文件的路径」「确认出现图片附件或图片输入提示」。
+
+## 1) 把图片"内容"放进剪贴板（位图，不是路径字符串）
+powershell -STA -Command "Add-Type -AssemblyName System.Windows.Forms; Add-Type -AssemblyName System.Drawing; $img=[System.Drawing.Image]::FromFile('D:\Github course\pi-test\seven.png'); [System.Windows.Forms.Clipboard]::SetImage($img); $img.Dispose(); Write-Output ('clipboard ' + [System.Windows.Forms.Clipboard]::ContainsImage())"
+clipboard: clipboard True
+
+## 2) 在 Pi 输入区按 Alt+V
+Pi 把剪贴板图片落成临时文件，并把该路径插入编辑器（源码依据：
+dist/modes/interactive/interactive-mode.js -> handleClipboardPaste()，图片分支写
+os.tmpdir()/pi-clipboard-<uuid>.png 后 insertTextAtCursor(filePath)）。
+
+按完 Alt+V 后输入框内容（尚未发送，见截图 S5b）：
+C:\Users\20349\AppData\Local\Temp\pi-clipboard-737f1508-ad61-44e6-84a0-6e387010c8e6.png请描述图片中的颜色、形状和数字。
+
+## 3) 回车发送，模型先 read 附件再作答（见截图 S5a）
+C:\Users\20349\AppData\Local\Temp\pi-clipboard-423f4d25-4d2e-4df4-9b91-a3f5d59bb872.png请描述图片中的颜色、形状和数字。
+
+The user pasted a clipboard image path. I need to read it.
+
+read ~\AppData\Local\Temp\pi-clipboard-423f4d25-4d2e-4df4-9b91-a3f5d59bb872.png
+
+图片描述：
+
+颜色
+- 背景：纯白色
+- 主体：一个深蓝色（约 #0B5FAE / 皇家蓝）的实心方块
+- 数字：纯白色，与蓝色形成强烈对比
+
+形状
+- 一个大正方形，位于画面中央（略微偏上），四角为直角、无描边
+- 正方形内部是一个白色数字字形，线条粗壮、无衬线、末端为平头切口
+
+数字
+- 内容为阿拉伯数字 7
+- 一条水平顶横笔，右侧向下斜撇，笔画粗细均匀，属于现代无衬线字体风格
+
+整体像是某种编号标签/图标（例如"第7区"、进度数字 7）。
+
+## 4) 会话状态栏
+D:\Github course\pi-test (main)
+↑619 ↓286 R6.1k CH86.5% 0.4%/1.0M (auto)     (qwen-token-plan-cn) deepseek-v4.1-flash • high
+
+## 结论
+剪贴板粘贴路径完整可复现：真图片进剪贴板 -> Alt+V -> 输入框出现 pi-clipboard-<uuid>.png
+（即 Pi 的"图片已附加"提示）-> 发送 -> 模型 read 该图并正确识别颜色/形状/数字。
+原始字节流：docs/logs/tui-task4b-clipboard-attach.raw.txt（未发送态）、
+docs/logs/tui-task4b-clipboard-full.raw.txt（发送 + 回复）。
+采集脚本：tools/tui-paste.py

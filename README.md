@@ -30,7 +30,9 @@
 | S2 | 配置模型 + 会话 | [`S2-配置模型与会话.png`](docs/screenshots/S2-配置模型与会话.png) |
 | S3 | 模型与思考级别切换 | [`S3-模型与思考级别切换.png`](docs/screenshots/S3-模型与思考级别切换.png) |
 | S4 | @ 引用代码文件 | [`S4-引用代码文件.png`](docs/screenshots/S4-引用代码文件.png) |
-| S5 | 粘贴图片识别 | [`S5-粘贴图片识别.png`](docs/screenshots/S5-粘贴图片识别.png) |
+| **S5a** | **Alt+V 粘贴剪贴板图片 + 回复** | [`S5a-剪贴板粘贴图片与回复.png`](docs/screenshots/S5a-剪贴板粘贴图片与回复.png) |
+| **S5b** | **图片已附加的提示（未发送）** | [`S5b-剪贴板图片已附加未发送.png`](docs/screenshots/S5b-剪贴板图片已附加未发送.png) |
+| S5 | 粘贴图片识别（`@文件` 对照路径） | [`S5-粘贴图片识别.png`](docs/screenshots/S5-粘贴图片识别.png) |
 | S6 | 插件安装与试用 | [`S6-插件安装与试用.png`](docs/screenshots/S6-插件安装与试用.png) |
 | **S6b** | **重启后 `[Extensions]` 加载** | [`S6b-重启后Extensions加载.png`](docs/screenshots/S6b-重启后Extensions加载.png) |
 | S7 | Skill 目录结构 | [`S7-Skill目录结构.png`](docs/screenshots/S7-Skill目录结构.png) |
@@ -134,10 +136,10 @@ deepseek  deepseek-v4-pro  1M       384K     yes       no
 
 Pi 的 `--model` 支持 `provider/model` 形式，也支持 `:<thinking>` 后缀。切换前后各发一次同样的问题：
 
-| 阶段 | 模型 | 回复 |
+| 阶段 | 模型 | 回复（逐字） |
 | --- | --- | --- |
-| 切换前 | `deepseek-flash` | 持续集成（CI）是指开发人员频繁地把代码提交到共享主干…… |
-| 切换后 | `deepseek-v4-pro` | 持续集成（Continuous Integration, CI）是一种开发实践…… |
+| 切换前 | `deepseek-flash` | 持续集成（CI）是指开发者频繁地把代码改动合并到主干，每次合并都自动触发构建和测试，从而尽早发现并修复集成问题。 |
+| 切换后 | `deepseek-v4-pro` | 持续集成是一种开发实践，指开发人员频繁地将代码变更合并到共享主干，并通过自动化构建和测试尽早发现并修复问题。 |
 
 两次都正常返回，证明**切换是真生效的**（不以打开选择器代替完成切换）。
 
@@ -233,14 +235,70 @@ pi --print "@hello.py" "请解释 @hello.py 的功能，说明运行后输出什
 制作了一张 **200×200** 的测试图：白色背景 + 蓝色方块 + 白色数字 `7`（见
 [`pi-test/seven.png`](pi-test/seven.png)）。
 
-图片输入需要支持视觉的模型，因此切到 `deepseek-flash`（`images: yes`；注意 `deepseek-v4-pro`
-为 `images: no`，用它测图片会失败）：
+图片输入需要支持视觉的模型。本次用 `qwen-token-plan-cn/deepseek-v4.1-flash`（`images: yes`；
+注意 `deepseek-v4-pro` 为 `images: no`，用它测图片会失败）。
+
+#### 主路径：按作业要求用 Alt+V 粘贴剪贴板里的**图片内容**
+
+作业明确要求「先截取图片内容到剪贴板，不要只复制图片文件的路径」并「确认出现图片附件或图片输入提示」。
+因此这里把 `seven.png` 的**位图**放进剪贴板（`[System.Windows.Forms.Clipboard]::SetImage(...)`，
+返回 `clipboard True`），再在 Pi 输入区按 **Alt+V**：
 
 ```powershell
-pi --model deepseek/deepseek-flash --print "@seven.png" "请描述图片中的颜色、形状和数字。"
+# 把图片本体（不是路径字符串）放入剪贴板
+powershell -STA -Command "Add-Type -AssemblyName System.Windows.Forms; Add-Type -AssemblyName System.Drawing; `
+  `$img=[System.Drawing.Image]::FromFile('D:\Github course\pi-test\seven.png'); `
+  [System.Windows.Forms.Clipboard]::SetImage(`$img); `$img.Dispose()"
 ```
 
-模型回复：
+按 Alt+V 后，输入框里立刻出现一个**临时附件路径**（截图 S5b，此时还没发送）：
+
+```text
+C:\Users\20349\AppData\Local\Temp\pi-clipboard-737f1508-ad61-44e6-84a0-6e387010c8e6.png请描述图片中的颜色、形状和数字。
+```
+
+这串 `pi-clipboard-<uuid>.png` 就是 Pi 自己的「图片已附加」提示。依据 Pi 源码
+`interactive-mode.js` 的 `handleClipboardPaste()`：剪贴板里是图片时，它把图片字节写到
+`os.tmpdir()/pi-clipboard-<uuid>.png`，再把该路径插入编辑器（`this.editor.insertTextAtCursor?.(filePath)`）。
+
+![S5b 剪贴板图片已附加（未发送）](docs/screenshots/S5b-剪贴板图片已附加未发送.png)
+
+接着补上提示词并回车发送，模型先 `read` 该附件再作答：
+
+```text
+C:\Users\20349\AppData\Local\Temp\pi-clipboard-423f4d25-4d2e-4df4-9b91-a3f5d59bb872.png请描述图片中的颜色、形状和数字。
+
+The user pasted a clipboard image path. I need to read it.
+read ~\AppData\Local\Temp\pi-clipboard-423f4d25-4d2e-4df4-9b91-a3f5d59bb872.png
+
+图片描述：
+
+颜色
+- 背景：纯白色
+- 主体：一个深蓝色（约 #0B5FAE / 皇家蓝）的实心方块
+- 数字：纯白色，与蓝色形成强烈对比
+
+形状
+- 一个大正方形，位于画面中央（略微偏上），四角为直角、无描边
+- 正方形内部是一个白色数字字形，线条粗壮、无衬线、末端为平头切口
+
+数字
+- 内容为阿拉伯数字 7
+- 一条水平顶横笔，右侧向下斜撇，笔画粗细均匀，属于现代无衬线字体风格
+```
+
+底部状态栏同时显示 `(qwen-token-plan-cn) deepseek-v4.1-flash • high` 与
+`↑619 ↓286 R6.1k CH86.5% 0.4%/1.0M (auto)`。
+
+![S5a 剪贴板粘贴图片与模型回复](docs/screenshots/S5a-剪贴板粘贴图片与回复.png)
+
+#### 对照路径：用 `@文件` 直接引用图片
+
+同一张图也可以用 `@路径` 直接引用（这是 Pi 的另一种图片输入方式，与 Alt+V 粘贴是两条不同路径）：
+
+```powershell
+pi --model qwen-token-plan-cn/deepseek-v4.1-flash --print "@seven.png" "请描述图片中的颜色、形状和数字。"
+```
 
 ```text
 - **颜色**：整个画面由两种颜色构成——背景的纯白色，以及中央一块**亮蓝色**（接近 #0070C0 的中蓝），
@@ -257,7 +315,10 @@ pi --model deepseek/deepseek-flash --print "@seven.png" "请描述图片中的�
 
 ![S5 粘贴图片识别](docs/screenshots/S5-粘贴图片识别.png)
 
-证据日志：[`docs/logs/task4b-image-input.log`](docs/logs/task4b-image-input.log)
+证据日志：[`docs/logs/task4b-clipboard.log`](docs/logs/task4b-clipboard.log)（Alt+V 主路径）、
+[`docs/logs/tui-task4b-clipboard-attach.raw.txt`](docs/logs/tui-task4b-clipboard-attach.raw.txt)、
+[`docs/logs/tui-task4b-clipboard-full.raw.txt`](docs/logs/tui-task4b-clipboard-full.raw.txt)、
+[`docs/logs/task4b-image-input.log`](docs/logs/task4b-image-input.log)（`@文件` 对照路径）
 
 ---
 
@@ -349,6 +410,27 @@ tool=fetch_content  args={"url":"https://example.com"
 ### 6.1 安装
 
 目标目录：`D:\Github course\study\.pi\skills\pptx`（**项目级**，不是用户级）。
+
+**源 commit（作业要求记录）**：
+
+| 项 | 值 |
+| --- | --- |
+| 仓库 | `https://github.com/anthropics/skills` |
+| 分支 | `main` |
+| **commit** | **`1780c5e5a552fd4d1c9d6a7b0cab26b0c2bef064`** |
+| commit 日期 | `2026-11-14T15:16:42Z` |
+| commit 标题 | `Update docx, pptx, xlsx, and pdf skills (#2217)` |
+| 子目录 | `skills/pptx` |
+| 文件数 | **58** |
+
+> 与作业示例的关系：作业示例记录的源 commit 是 `2c5958ecac7cee2b583967a2c4981d0f4a75c579`
+> （`Move Office skills to the Apache 2.0 license (#2146)`，`2026-11-06T22:32:28Z`，**56 个文件**）。
+> 本次安装的是**同一仓库同一目录的更新版本** main，比示例版本多 2 个文件
+> （`scripts/apply_theme.js`、`scripts/slide_text.py`），另有 11 个文件内容不同
+> （`SKILL.md`、`scripts/add_slide.py`、`scripts/office/soffice.py`、`scripts/office/validate.py`、
+> `scripts/office/helpers/pptx_chart.py` 等）。
+> 已用 Git blob SHA-1 逐文件比对确认：本地 58 个文件与 `1780c5e…` 的 58 个 blob **完全一致**，
+> 与示例 commit `2c5958e…` 只有 45 个一致。所以这里如实写 main 的 SHA，而不是照抄示例的 SHA。
 
 源仓库 `anthropics/skills` 的 `skills/pptx` 完整目录，**保留 `SKILL.md`、`LICENSE.txt` 和 `scripts`**：
 
@@ -475,13 +557,15 @@ All validations PASSED!
 | 1 | `pi : 因为在此系统上禁止运行脚本` | PowerShell 执行策略为 `Restricted`，`pi.ps1` 无法加载 | 调用 `pi.cmd`，或 `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` |
 | 2 | `401 Authentication Fails` | 原来的 DeepSeek key 已失效 | 重新在 platform.deepseek.com 创建 key |
 | 3 | `File not found: ...hello.py 请解释...` | `@文件` 与提示词写在同一个参数里 | 让 `@文件` 单独占一个参数 |
-| 4 | 图片识别失败 | `deepseek-v4-pro` 的 `images` 为 `no` | 改用 `deepseek-flash`（`images: yes`） |
+| 4 | 图片识别失败 | 模型 `images` 为 `no`（如 `deepseek-v4-pro`） | 换支持视觉的模型（`deepseek-flash` / `deepseek-v4.1-flash`） |
 | 5 | `git clone` 报 `Connection was reset` | 网络对 GitHub git 协议重置 | 改用 codeload zip 下载 |
 | 6 | `ModuleNotFoundError: No module named 'pptx'` | Skill 假设 python-pptx 已预装 | 手动 `pip install python-pptx` |
 | 7 | `thumbnail.py` 报 `module 'socket' has no attribute 'AF_UNIX'` | 该脚本面向 Unix + LibreOffice | 改用 PowerPoint COM 导出 PNG |
 | 8 | `--mode json` 取不到 `thinkingLevel`（读到空字符串） | `message_end.message` 里根本没有该字段 | 改读会话文件 `sessions\<项目>\*.jsonl` 的 `thinking_level_change` |
 | 9 | `pi --verbose \| Out-String` 输出 **0 字节** | Pi 只在 TTY 下绘制界面，管道里不渲染 | 用 `pywinpty`（ConPTY）+ `pyte` 重建屏幕，见 `tools/tui_capture.py` |
 | 10 | 项目级 Skill 不出现，卡在 `Trust project folder?` | 首次启动需信任项目目录才会加载 `.pi` | 选择 `Trust` 后重启 |
+| 11 | `pi --model qwen-token-plan-cn/... ` 报 `401 Invalid API-key provided` | 内置该 provider 的 `baseUrl` 不是 DashScope 兼容端点 | 在 `~\.pi\agent\models.json` 里只覆盖 `baseUrl`（不含密钥） |
+| 12 | 用 `Set-Content` 重写含中文的 `.py` 脚本后报 `SyntaxError: unterminated string literal` | PowerShell 默认编码把 CJK 写坏 | 含中文的脚本用编辑器/write 工具保存，别用 `Set-Content` 回写 |
 
 **核心体会**：「安装成功」「发现成功」「调用成功」「产出成功」是四个不同层次，必须逐层验证。
 仅仅看到 `pi install` 打印成功，不等于插件在重启后真的加载了 —— 要看工具清单和实际调用结果。
@@ -502,12 +586,13 @@ All validations PASSED!
 │   └── pi-agent-report.pptx       两页成果 PPT
 ├── docs/
 │   ├── logs/                      全部终端证据原文（含 TUI 原始字节流 *.raw.txt）
-│   ├── screenshots/               S1–S8 + S6b/S8b 截图
+│   ├── screenshots/               S1–S8 + S5a/S5b + S6b/S8b 截图
 │   └── assets/                    PPT 渲染出的页面图片
 └── tools/
     ├── capture-evidence.ps1       一键复现并采集全部证据
     ├── render-screenshots.py      把日志渲染成 S1–S8 截图
     ├── tui_capture.py             用 ConPTY 抓取 Pi 真实 TUI 画面
+    ├── tui-paste.py               抓取 Alt+V 剪贴板粘贴画面（S5a / S5b）
     └── render-tui.py              把 TUI 字节流用 pyte 重建成图片
 ```
 
@@ -532,6 +617,17 @@ python .\tools\tui_capture.py "D:\Github course\pi-test"  raw-ext.txt  clean-ext
 python .\tools\tui_capture.py "D:\Github course\study"    raw-skill.txt clean-skill.txt 60 "\r"
 python .\tools\render-tui.py  raw-ext.txt   S6b.png "pi 启动画面（Extensions）"
 python .\tools\render-tui.py  raw-skill.txt S8b.png "pi 启动画面（Skills）"
+
+# 6.（可选）抓取 Alt+V 剪贴板粘贴画面，生成 S5b（未发送）/ S5a（含回复）
+python .\tools\tui-paste.py "D:\Github course\pi-test" "D:\Github course\pi-test\seven.png" `
+    "$env:TEMP\s5b" "qwen-token-plan-cn/deepseek-v4.1-flash" attach
+python .\tools\tui-paste.py "D:\Github course\pi-test" "D:\Github course\pi-test\seven.png" `
+    "$env:TEMP\s5a" "qwen-token-plan-cn/deepseek-v4.1-flash" full
+python .\tools\render-tui.py "$env:TEMP\s5b-raw.txt" S5b.png "Alt+V 已附加图片（未发送）"
+python .\tools\render-tui.py "$env:TEMP\s5a-raw.txt" S5a.png "Alt+V 粘贴图片与回复"
 ```
 
 > `"\r"` 是给 `Trust project folder?` 提示按 Enter 用的——不信任项目目录，`.pi/skills` 不会被加载。
+
+> `tui-paste.py` 要求视觉模型。本机可用 `qwen-token-plan-cn/deepseek-v4.1-flash`（`images: yes`）；
+> 若用 DeepSeek provider，须换成 `deepseek/deepseek-flash`。

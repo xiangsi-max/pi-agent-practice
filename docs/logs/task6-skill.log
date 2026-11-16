@@ -1,5 +1,14 @@
-﻿## 当前项目目录
+## 当前项目目录
 D:\Github course\study
+
+## 源 commit（作业要求记录）
+仓库   : https://github.com/anthropics/skills
+分支   : main
+commit : 1780c5e5a552fd4d1c9d6a7b0cab26b0c2bef064
+日期   : 2026-11-14T15:16:42Z
+标题   : Update docx, pptx, xlsx, and pdf skills (#2217)
+子目录 : skills/pptx
+校验   : 本地 58 个文件与本 commit 的 58 个 Git blob 逐一比对，全部一致
 
 ## 目录结构 (.pi\skills\pptx 前两层, 已排除 __pycache__)
 
