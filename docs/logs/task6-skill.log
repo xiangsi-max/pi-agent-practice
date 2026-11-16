@@ -1,0 +1,65 @@
+﻿## 当前项目目录
+D:\Github course\study
+
+## 目录结构 (.pi\skills\pptx 前两层)
+
+条目                                    
+--                                    
+.pi\skills\pptx\scripts               
+.pi\skills\pptx\LICENSE.txt           
+.pi\skills\pptx\SKILL.md              
+.pi\skills\pptx\scripts\office        
+.pi\skills\pptx\scripts\add_slide.py  
+.pi\skills\pptx\scripts\apply_theme.js
+.pi\skills\pptx\scripts\clean.py      
+.pi\skills\pptx\scripts\slide_text.py 
+.pi\skills\pptx\scripts\thumbnail.py  
+.pi\skills\pptx\scripts\__init__.py   
+
+
+
+
+## 文件总数
+68
+
+## 显式调用 Skill
+这个 Skill 的名称、用途和所在目录如下：
+
+## 名称
+**pptx**（PPTX 创建、编辑和分析）
+
+## 用途
+用于处理 `.pptx`（以及 `.potx` 模板）文件的所有相关工作，包括：
+
+- **创建**新的演示文稿（通过 `pptxgenjs` 脚本，按"结构化幻灯片"方式构建）
+- **编辑**现有演示文稿或基于模板构建（解压 → 编辑 XML → 重新打包）
+- **读取/分析**演示文稿内容（提取文字、生成缩略图、校验文件）
+
+此外还提供完整的设计指导，包括：
+
+| 方面 | 内容 |
+|------|------|
+| **内容与流程** | 每页一个信息点、金字塔结构、按演示场景定篇幅 |
+| **设计思路** | 配色方案、排版布局、避免常见错误（如标题下划线、装饰色条） |
+| **排版规范** | 字体选择（安全字体列表）、字号标准、间距规范 |
+| **质量保证（QA）** | 内容检查、文件校验、视觉检查（渲染成图片逐页审查） |
+
+## 所在目录
+```
+D:\Github course\study\.pi\skills\pptx\
+```
+
+包含的核心脚本：
+
+| 脚本 | 功能 |
+|------|------|
+| `scripts/slide_text.py` | 提取每页标题、文字、表格、图表数据、备注 |
+| `scripts/thumbnail.py` | 生成幻灯片缩略图网格 |
+| `scripts/add_slide.py` | 复制幻灯片（含打包注册） |
+| `scripts/clean.py` | 清理未引用的幻灯片、媒体和关系 |
+| `scripts/apply_theme.js` | 应用主题配色 |
+| `scripts/office/validate.py` | 校验文件结构（schema、关系、图表等） |
+| `scripts/office/soffice.py` | LibreOffice 转换封装（如转 PDF） |
+
+**触发时机**：只要涉及 `.pptx` 或 `.potx` 文件（无论作为输入、输出还是两者），比如创建演示文稿、阅读/解析内容、编辑更新、合并拆分、处理模板等，都应使用此 Skill。
+

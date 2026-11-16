@@ -1,0 +1,17 @@
+﻿## pi-web-access 扩展已加载的证据
+
+重启 pi 后, 系统提示词的工具清单中出现了该扩展注册的 4 个工具:
+
+  - web_search : 已注册
+  - source_check : 已注册
+  - fetch_content : 已注册
+  - get_search_content : 已注册
+
+## 实际执行的工具调用
+
+  tool=fetch_content  args={"url":"https://example.com"
+  tool=bash  args={"command":"curl -s https://example.com | grep -i '<title>'","timeout":30
+  tool=fetch_content  args={"url":"https://example.com","mode":"raw"
+
+## 结论
+fetch_content 为 pi-web-access 提供, 调用成功并返回 Example Domain 标题。

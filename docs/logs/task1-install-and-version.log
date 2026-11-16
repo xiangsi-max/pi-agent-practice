@@ -1,0 +1,14 @@
+﻿## Pi 安装与版本
+安装命令: powershell -c "irm https://pi.dev/install.ps1 | iex"
+安装路径: C:\Users\20349\.pi\agent\bin\pi.cmd
+
+## pi --version
+1.5.2
+
+## 启动工作目录
+Get-Location: D:\Github course
+
+## 运行时版本
+node v26.13.1
+npm  11.20.0
+

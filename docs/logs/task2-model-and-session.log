@@ -1,0 +1,12 @@
+﻿## 可用模型列表 (pi --list-models)
+provider  model            context  max-out  thinking  images
+deepseek  deepseek-flash   1M       384K     yes       yes   
+deepseek  deepseek-v4-pro  1M       384K     yes       no    
+
+## 凭证来源: 环境变量 DEEPSEEK_API_KEY (未写入 auth.json, 未打印)
+
+## 会话: 提示词 你好
+你好！我是你的编程助手，可以帮你查看文件、运行命令、修改代码、搜索资料等等。
+
+有什么我可以帮你的吗？😊
+

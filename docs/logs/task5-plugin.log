@@ -1,0 +1,13 @@
+﻿## 安装命令
+pi install npm:pi-web-access
+
+## pi list
+User packages:
+  npm:pi-web-access
+    C:\Users\20349\.pi\agent\npm\node_modules\pi-web-access
+
+## 插件功能调用: 获取网页标题
+页面标题是：**Example Domain**
+
+页面 `<title>` 标签内容为 "Example Domain"。
+

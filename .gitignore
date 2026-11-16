@@ -1,0 +1,27 @@
+# --- 密钥与凭据（务必不要提交）---
+auth.json
+*.key
+.env
+.env.*
+.pi/agent/auth.json
+
+# --- 依赖与缓存 ---
+node_modules/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# --- Office 临时文件 ---
+~$*.pptx
+~$*.xlsx
+~$*.docx
+*.tmp
+
+# --- 系统文件 ---
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# --- 编辑器 ---
+.vscode/
+.idea/
