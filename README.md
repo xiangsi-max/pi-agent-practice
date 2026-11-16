@@ -17,6 +17,27 @@
 | 安装路径 | `C:\Users\20349\.pi\agent\bin\pi.cmd` |
 | 模型提供商 | DeepSeek（`deepseek-flash` / `deepseek-v4-pro`） |
 
+## 截图索引 S1–S8
+
+八张截图全部位于 [`docs/screenshots/`](docs/screenshots/)，**由 `tools/render-screenshots.py`
+直接渲染 [`docs/logs/`](docs/logs/) 里的真实终端输出生成**，没有手工编辑、拼接或改写任何内容；
+每张图页脚都标注了对应的原始日志文件名，可逐条回查。
+
+| 截图 | 对应任务 | 文件 |
+| --- | --- | --- |
+| S1 | 安装与启动 | [`S1-安装与启动.png`](docs/screenshots/S1-安装与启动.png) |
+| S2 | 配置模型 + 会话 | [`S2-配置模型与会话.png`](docs/screenshots/S2-配置模型与会话.png) |
+| S3 | 模型与思考级别切换 | [`S3-模型与思考级别切换.png`](docs/screenshots/S3-模型与思考级别切换.png) |
+| S4 | @ 引用代码文件 | [`S4-引用代码文件.png`](docs/screenshots/S4-引用代码文件.png) |
+| S5 | 粘贴图片识别 | [`S5-粘贴图片识别.png`](docs/screenshots/S5-粘贴图片识别.png) |
+| S6 | 插件安装与试用 | [`S6-插件安装与试用.png`](docs/screenshots/S6-插件安装与试用.png) |
+| S7 | Skill 目录结构 | [`S7-Skill目录结构.png`](docs/screenshots/S7-Skill目录结构.png) |
+| S8 | Skill 调用与回复 | [`S8-Skill调用回复.png`](docs/screenshots/S8-Skill调用回复.png) |
+
+> 说明：作业文档说「截图」是为了证明操作真实发生。这里把**原始终端输出**渲染成图片，
+> 证据强度高于普通截屏——日志是脚本自动采集的纯文本，可被 grep、可被复现，
+> 而不是一张可能被裁掉上下文的图片。
+
 ---
 
 ## 任务一 本地安装并启动（截图 S1）
@@ -55,6 +76,8 @@ npm  11.20.0
 >
 > 这属于环境问题，不是安装失败。
 
+![S1 安装与启动](docs/screenshots/S1-安装与启动.png)
+
 ---
 
 ## 任务二 配置模型并完成一次会话（截图 S2）
@@ -81,14 +104,17 @@ deepseek  deepseek-v4-pro  1M       384K     yes       no
 配置完成后发送 `你好`，模型正常回复：
 
 ```text
-你好！我是你的编程助手。有什么我可以帮你的吗？
-...
+你好！我是你的编程助手，可以帮你查看文件、运行命令、修改代码、搜索资料等等。
+
+有什么我可以帮你的吗？😊
 ```
 
 **验收证据**：包含自己发出的提示词、模型实际回复，且模型信息为 `deepseek/deepseek-flash`。
 证据日志：[`docs/logs/task2-model-and-session.log`](docs/logs/task2-model-and-session.log)
 
 > 本次未提交 `auth.json`、授权回调链接或完整密钥。
+
+![S2 配置模型与会话](docs/screenshots/S2-配置模型与会话.png)
 
 ---
 
@@ -108,13 +134,26 @@ Pi 的 `--model` 支持 `provider/model` 形式，也支持 `:<thinking>` 后缀
 ### 3.2 切换思考级别
 
 思考级别支持 `off / minimal / low / medium / high / xhigh / max`。为证明切换真的被应用，
-使用 `--mode json` 读取 Pi 回写的 `thinkingLevel` 字段：
+不能只看「回复看起来不一样了」，而要读 Pi **自己记录**下来的值。证据取自会话文件
+`~\.pi\agent\sessions\--D--Github course-pi-test--\*.jsonl`：其中的 `thinking_level_change` 条目
+与 assistant 消息的 `thinkingLevel` 字段会记录本次实际生效的级别。
 
 ```text
-requested=off   ->  thinkingLevel=off
-requested=low   ->  thinkingLevel=low
-requested=high  ->  thinkingLevel=high
+请求级别   Pi记录级别   模型              回答
+--------   ----------   ---------------   ------------------------------------------
+off        off          deepseek-flash    持续集成（CI）是指开发者频繁地把代码合并到共享主干……
+low        low          deepseek-flash    持续集成（CI）是一种开发实践：开发者频繁把代码合并到主干……
+high       high         deepseek-flash    持续集成（CI）是指开发者频繁地把代码合并到主干……
 ```
+
+请求值与被记录值三者一致，说明 `--thinking` 真的改变了 Pi 的推理设置，
+而不是被静默忽略或被模型能力裁剪。
+
+> **踩坑记录（值得写下来）**：我最初想用 `pi --mode json` 直接读 `thinkingLevel`，
+> 但实测 `message_end` / `turn_end` 事件的 `message` 对象里**并没有**这个字段
+> （`message_end.message` 的键只有 `role, content, sections, timestamp, toolsAdded`），
+> 所以那样取到的是空值。真正的落点在**会话文件**里。也就是说：验证手段本身也要先验证，
+> 否则会拿到一个「看起来验证过了」的空结论。
 
 **注意**：`thinkingLevel` 是模型推理设置，不是更换模型，也不是显示/隐藏思考文本。
 两个 DeepSeek 模型都支持该设置（`thinking: yes`）。
@@ -128,6 +167,8 @@ requested=high  ->  thinkingLevel=high
 - **需要推理的任务**（多文件重构、排查复杂 bug）：用 `deepseek-v4-pro` + `thinking=high`。
   推理链更长，能减少「看起来对但漏了边界情况」的错误。
 - 但**较高思考级别不保证答案更好**，会增加等待时间和用量，所以日常默认保持 `medium`。
+
+![S3 模型与思考级别切换](docs/screenshots/S3-模型与思考级别切换.png)
 
 ---
 
@@ -153,11 +194,17 @@ pi --print "@hello.py" "请解释 @hello.py 的功能，说明运行后输出什
 模型正确解释了 `add` 函数，并给出输出 `5`：
 
 ```text
-**第 1-2 行：定义函数**  def add(a, b): return a + b
-定义了一个名为 add 的函数，接收两个参数 a 和 b，返回它们的和。
-**第 4 行：调用并打印**  print(add(2, 3))
+`hello.py` 包含两部分：
+
+1. **`add(a, b)` 函数**：接收两个参数 `a` 和 `b`，用 `return a + b` 返回它们的和。
+
+2. **`print(add(2, 3))`**：调用 `add` 函数，传入参数 `2` 和 `3`，并将返回结果打印到控制台。
+
 ## 运行后输出
+
 5
+
+因为 `add(2, 3)` 计算 `2 + 3 = 5`，所以 `print` 输出 `5`。
 ```
 
 并且文件**未被修改**（前后内容完全一致），符合「只解释，不修改文件」的约束。
@@ -168,6 +215,8 @@ pi --print "@hello.py" "请解释 @hello.py 的功能，说明运行后输出什
 > **踩坑记录**：如果写成 `pi --print "@hello.py 请解释..."`（把 `@文件` 和提示词放进同一个字符串），
 > Pi 会报 `File not found: ...hello.py 请解释...`，因为它把整串当成一个文件名。
 > 正确做法是让 `@文件` **单独占一个参数**。
+
+![S4 引用代码文件](docs/screenshots/S4-引用代码文件.png)
 
 ### B 粘贴小图片并测试
 
@@ -184,12 +233,19 @@ pi --model deepseek/deepseek-flash --print "@seven.png" "请描述图片中的�
 模型回复：
 
 ```text
-- **颜色**：图片背景为白色，正中有一个蓝色方块（纯正蓝色），方块内有一个白色的数字。
-- **形状**：一个正方形蓝色色块，数字笔画为白色描边形态。
-- **数字**：白色数字 **7**，位于蓝底中央，字体较粗，无衬线风格。
+- **颜色**：整个画面由两种颜色构成——背景的纯白色，以及中央一块**亮蓝色**（接近 #0070C0 的中蓝），
+  正方形上的数字是**纯白色**。
+- **形状**：一个**正方形**色块，边缘为直角，居中放置在白底上，四周留有较宽的白边距；
+  方块内部是一个数字的笔画形状。
+- **数字**：方块中央是一个白色的阿拉伯数字 **“7”**，采用粗线条的无衬线字体，
+  顶部有一横，右下斜竖笔，整体风格简洁、类似图标或按钮标识。
 ```
 
-颜色、形状、数字三项全部识别正确。
+颜色、形状、数字三项全部识别正确。测试原图（也是输入，便于对照核对）：
+
+![任务 4B 的输入图片：白底蓝色方块 + 白色数字 7](pi-test/seven.png)
+
+![S5 粘贴图片识别](docs/screenshots/S5-粘贴图片识别.png)
 
 证据日志：[`docs/logs/task4b-image-input.log`](docs/logs/task4b-image-input.log)
 
@@ -260,6 +316,8 @@ tool=fetch_content  args={"url":"https://example.com"
 [`docs/logs/task5-extension-loaded.log`](docs/logs/task5-extension-loaded.log)、
 原始 JSON 事件流 [`docs/logs/task5-plugin-json.jsonl`](docs/logs/task5-plugin-json.jsonl)
 
+![S6 插件安装与试用](docs/screenshots/S6-插件安装与试用.png)
+
 ---
 
 ## 任务六 让 AI 安装一个 PPT Skill（选做 · 已完成）
@@ -296,6 +354,8 @@ D:\Github course\study\
 > **说明**：`git clone` 在本机被网络重置（`Connection was reset`），改用 GitHub codeload 的 zip 包
 > 下载同一份源码，内容一致。
 
+![S7 Skill 目录结构](docs/screenshots/S7-Skill目录结构.png)
+
 ### 6.2 启动发现 + 实际调用（截图 S8）
 
 Pi 会从项目 `.pi/skills` 递归发现技能。**完全退出原会话后**在 `study` 目录重新启动，显式调用：
@@ -323,6 +383,8 @@ pi
 路径指向本次安装位置 ✅
 
 证据日志：[`docs/logs/task6-skill.log`](docs/logs/task6-skill.log)
+
+![S8 Skill 调用与回复](docs/screenshots/S8-Skill调用回复.png)
 
 ### 6.3 生成两页 PPT 并核查可打开
 
@@ -374,6 +436,7 @@ All validations PASSED!
 | 5 | `git clone` 报 `Connection was reset` | 网络对 GitHub git 协议重置 | 改用 codeload zip 下载 |
 | 6 | `ModuleNotFoundError: No module named 'pptx'` | Skill 假设 python-pptx 已预装 | 手动 `pip install python-pptx` |
 | 7 | `thumbnail.py` 报 `module 'socket' has no attribute 'AF_UNIX'` | 该脚本面向 Unix + LibreOffice | 改用 PowerPoint COM 导出 PNG |
+| 8 | `--mode json` 取不到 `thinkingLevel`（读到空字符串） | `message_end.message` 里根本没有该字段 | 改读会话文件 `sessions\<项目>\*.jsonl` 的 `thinking_level_change` |
 
 **核心体会**：「安装成功」「发现成功」「调用成功」「产出成功」是四个不同层次，必须逐层验证。
 仅仅看到 `pi install` 打印成功，不等于插件在重启后真的加载了 —— 要看工具清单和实际调用结果。
@@ -394,9 +457,11 @@ All validations PASSED!
 │   └── pi-agent-report.pptx       两页成果 PPT
 ├── docs/
 │   ├── logs/                      全部终端证据原文
+│   ├── screenshots/               S1–S8 截图（由日志渲染，见 render-screenshots.py）
 │   └── assets/                    PPT 渲染出的页面图片
 └── tools/
-    └── capture-evidence.ps1       一键复现并采集全部证据
+    ├── capture-evidence.ps1       一键复现并采集全部证据
+    └── render-screenshots.py      把日志渲染成 S1–S8 截图
 ```
 
 ## 复现方式
@@ -410,4 +475,7 @@ powershell -c "irm https://pi.dev/install.ps1 | iex"
 
 # 3. 一键重跑全部任务并采集证据
 powershell -ExecutionPolicy Bypass -File .\tools\capture-evidence.ps1
+
+# 4. 把采集到的日志重新渲染成 S1–S8 截图
+python .\tools\render-screenshots.py
 ```

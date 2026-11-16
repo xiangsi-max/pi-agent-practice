@@ -2,19 +2,22 @@
 
 ## 仓库地址
 
-> 把下面这行替换成你 push 后的仓库地址
-> `https://github.com/<你的用户名>/<仓库名>`
+https://github.com/xiangsi-max/pi-agent-practice
+
+> 完整报告见该仓库的 [README.md](https://github.com/xiangsi-max/pi-agent-practice/blob/main/README.md)，
+> S1–S8 截图见 [docs/screenshots](https://github.com/xiangsi-max/pi-agent-practice/tree/main/docs/screenshots)，
+> 所有终端证据原文见 [docs/logs](https://github.com/xiangsi-max/pi-agent-practice/tree/main/docs/logs)。
 
 ## 完成情况总览
 
 | 任务 | 要求 | 状态 | 证据 |
 | --- | --- | --- | --- |
-| 一 | 本地安装并启动 Pi | ✅ | `docs/logs/task1-install-and-version.log` |
-| 二 | 配置模型 + 最简单会话 | ✅ | `docs/logs/task2-model-and-session.log` |
-| 三 | 切换模型 + 思考级别 | ✅ | `docs/logs/task3-model-and-thinking.log` |
-| 四 | @ 引用代码 + 粘贴小图片 | ✅ | `docs/logs/task4a-*.log`、`task4b-*.log` |
-| 五 | 安装并试用一个插件 | ✅ | `docs/logs/task5-*.log` |
-| 六 | PPT Skill（选做） | ✅ 已完成 | `docs/logs/task6-skill.log` |
+| 一 | 本地安装并启动 Pi | ✅ | S1 ｜ `docs/logs/task1-install-and-version.log` |
+| 二 | 配置模型 + 最简单会话 | ✅ | S2 ｜ `docs/logs/task2-model-and-session.log` |
+| 三 | 切换模型 + 思考级别 | ✅ | S3 ｜ `docs/logs/task3-model-and-thinking.log` |
+| 四 | @ 引用代码 + 粘贴小图片 | ✅ | S4、S5 ｜ `docs/logs/task4a-*.log`、`task4b-*.log` |
+| 五 | 安装并试用一个插件 | ✅ | S6 ｜ `docs/logs/task5-*.log` |
+| 六 | PPT Skill（选做） | ✅ 已完成 | S7、S8 ｜ `docs/logs/task6-skill.log` |
 
 ## 环境信息
 
@@ -60,16 +63,25 @@ deepseek  deepseek-v4-pro  1M       384K     yes       no
 | 切换前 | `deepseek-flash` |
 | 切换后 | `deepseek-v4-pro` |
 
-思考级别切换（用 `--mode json` 读取 Pi 回写的 `thinkingLevel` 字段验证确实生效）：
+思考级别切换（证据取自 Pi 会话文件 `~\.pi\agent\sessions\<项目>\*.jsonl` 中的
+`thinking_level_change` 条目与 assistant 消息的 `thinkingLevel` 字段，不是只看回复文本）：
 
 ```text
-requested=off   ->  thinkingLevel=off
-requested=low   ->  thinkingLevel=low
-requested=high  ->  thinkingLevel=high
+请求级别   Pi记录级别   模型
+off        off          deepseek-flash
+low        low          deepseek-flash
+high       high         deepseek-flash
 ```
 
-选择理由：简单问题用 `deepseek-flash` + `off/low`（快、省）；多文件重构或复杂排错用
-`deepseek-v4-pro` + `high`。但高思考级别不保证答案更好，会增加等待与用量，故日常默认 `medium`。
+请求值与 Pi 实际记录值三者一致，说明切换确实生效。
+
+> 踩坑：本想让 `pi --mode json` 直接回写 `thinkingLevel`，但 `message_end.message` 里并没有该字段，
+> 读到的永远是空值；真正的落点在会话文件里。验证手段本身也要先验证。
+
+**选择说明**：简单问题（解释名词、算术）用 `deepseek-flash` + `off/low`，快且省；
+多文件重构、复杂排错用 `deepseek-v4-pro` + `high`，推理链更长。但高思考级别不保证答案更好，
+会增加等待与用量，故日常默认 `medium`。模型切换前后各发同一问题「请用一句话解释持续集成」，
+两次均正常返回，确认切换真实生效。
 
 ### 任务四 引用代码并粘贴小图片
 
@@ -80,6 +92,7 @@ requested=high  ->  thinkingLevel=high
 
 **B. 粘贴小图片**：自制 200×200 蓝色方块 + 白色数字 `7`，切到支持视觉的 `deepseek-flash`
 （`deepseek-v4-pro` 的 `images` 为 `no`），模型正确识别出「白底、蓝色正方形、数字 7」。
+输入原图见仓库 `pi-test/seven.png`，可对照核对识别结果。
 
 ### 任务五 安装并试用插件
 
