@@ -1,6 +1,6 @@
 # 实践课1：Pi Agent 安装与基础使用
 
-> 姓名拼音：**xiangsi-max** ｜ 完成日期：2026-11-16
+> 姓名拼音：**luoweicheng** ｜ GitHub 登录名：**xiangsi-max** ｜ 完成日期：2026-11-16
 > 作业文档：https://github.com/hunnuOpenSourceSoftware2026/assignments/blob/main/practice/01-Pi-Agent-start.md
 
 本仓库记录本次实践课的全部操作过程与可核验证据。所有任务均在本机真实执行，日志原文见
@@ -31,8 +31,17 @@
 | S4 | @ 引用代码文件 | [`S4-引用代码文件.png`](docs/screenshots/S4-引用代码文件.png) |
 | S5 | 粘贴图片识别 | [`S5-粘贴图片识别.png`](docs/screenshots/S5-粘贴图片识别.png) |
 | S6 | 插件安装与试用 | [`S6-插件安装与试用.png`](docs/screenshots/S6-插件安装与试用.png) |
+| **S6b** | **重启后 `[Extensions]` 加载** | [`S6b-重启后Extensions加载.png`](docs/screenshots/S6b-重启后Extensions加载.png) |
 | S7 | Skill 目录结构 | [`S7-Skill目录结构.png`](docs/screenshots/S7-Skill目录结构.png) |
 | S8 | Skill 调用与回复 | [`S8-Skill调用回复.png`](docs/screenshots/S8-Skill调用回复.png) |
+| **S8b** | **重启后 `[Skills]` 发现 pptx** | [`S8b-重启后Skills发现pptx.png`](docs/screenshots/S8b-重启后Skills发现pptx.png) |
+
+> **S6b / S8b 是 Pi 的真实 TUI 画面**（不是日志渲染图）：用 `winpty` 开一个真实伪终端运行
+> `pi --verbose`，再用 `pyte` 把捕获的转义序列重建成屏幕后出图。
+> 之所以必须这么做：Pi 只在 TTY 下绘制界面，管道里跑 `pi --verbose` 输出 0 字节，
+> 用管道"证明"加载成功是不可靠的。原始字节流存于
+> [`docs/logs/tui-capture-extensions.raw.txt`](docs/logs/tui-capture-extensions.raw.txt) 与
+> [`docs/logs/tui-capture-skills-study.raw.txt`](docs/logs/tui-capture-skills-study.raw.txt)。
 
 > 说明：作业文档说「截图」是为了证明操作真实发生。这里把**原始终端输出**渲染成图片，
 > 证据强度高于普通截屏——日志是脚本自动采集的纯文本，可被 grep、可被复现，
@@ -318,6 +327,20 @@ tool=fetch_content  args={"url":"https://example.com"
 
 ![S6 插件安装与试用](docs/screenshots/S6-插件安装与试用.png)
 
+**重启后的真实 TUI 加载画面（S6b）**——作业要求截图须包含 `[Extensions]` 区域和插件名称：
+
+![S6b 重启后 Extensions 加载](docs/screenshots/S6b-重启后Extensions加载.png)
+
+```text
+[Extensions]
+  user
+    npm:pi-web-access
+      dist
+```
+
+`pi list` 是本机配置，`[Extensions]` 是 Pi 重启后**实际加载**的扩展——作业明确要求
+「不能仅用安装命令截图代替加载成功」，这一张才是加载证据。
+
 ---
 
 ## 任务六 让 AI 安装一个 PPT Skill（选做 · 已完成）
@@ -386,6 +409,25 @@ pi
 
 ![S8 Skill 调用与回复](docs/screenshots/S8-Skill调用回复.png)
 
+**重启后的真实 TUI 发现画面（S8b）**——作业要求截图须包含 `[Skills]` 中发现 pptx，
+且路径指向本次安装位置：
+
+![S8b 重启后 Skills 发现 pptx](docs/screenshots/S8b-重启后Skills发现pptx.png)
+
+```text
+[Skills]
+  project
+    D:\Github course\study\.pi\skills\pptx\SKILL.md
+  user
+    ~\.agents\skills\hindsight-coding-agent\SKILL.md
+```
+
+`project` 分组下就是本次装的项目级 `pptx` Skill，路径与 6.1 的安装位置一致。
+
+> **注意**：首次启动时会弹出 `Trust project folder? D:\Github course\study` 的信任提示，
+> 必须选择 `Trust` 后 Pi 才会加载 `.pi` 下的项目级资源；直接跳过则 `[Skills]` 里不会出现 pptx。
+> 原始字节流：[`docs/logs/tui-capture-skills-study.raw.txt`](docs/logs/tui-capture-skills-study.raw.txt)
+
 ### 6.3 生成两页 PPT 并核查可打开
 
 按 Skill 的指引补齐依赖后生成（依赖是本机事实，不能假设预装）：
@@ -437,6 +479,8 @@ All validations PASSED!
 | 6 | `ModuleNotFoundError: No module named 'pptx'` | Skill 假设 python-pptx 已预装 | 手动 `pip install python-pptx` |
 | 7 | `thumbnail.py` 报 `module 'socket' has no attribute 'AF_UNIX'` | 该脚本面向 Unix + LibreOffice | 改用 PowerPoint COM 导出 PNG |
 | 8 | `--mode json` 取不到 `thinkingLevel`（读到空字符串） | `message_end.message` 里根本没有该字段 | 改读会话文件 `sessions\<项目>\*.jsonl` 的 `thinking_level_change` |
+| 9 | `pi --verbose \| Out-String` 输出 **0 字节** | Pi 只在 TTY 下绘制界面，管道里不渲染 | 用 `pywinpty`（ConPTY）+ `pyte` 重建屏幕，见 `tools/tui_capture.py` |
+| 10 | 项目级 Skill 不出现，卡在 `Trust project folder?` | 首次启动需信任项目目录才会加载 `.pi` | 选择 `Trust` 后重启 |
 
 **核心体会**：「安装成功」「发现成功」「调用成功」「产出成功」是四个不同层次，必须逐层验证。
 仅仅看到 `pi install` 打印成功，不等于插件在重启后真的加载了 —— 要看工具清单和实际调用结果。
@@ -456,12 +500,14 @@ All validations PASSED!
 │   ├── make_deck.js               生成 PPT 的脚本
 │   └── pi-agent-report.pptx       两页成果 PPT
 ├── docs/
-│   ├── logs/                      全部终端证据原文
-│   ├── screenshots/               S1–S8 截图（由日志渲染，见 render-screenshots.py）
+│   ├── logs/                      全部终端证据原文（含 TUI 原始字节流 *.raw.txt）
+│   ├── screenshots/               S1–S8 + S6b/S8b 截图
 │   └── assets/                    PPT 渲染出的页面图片
 └── tools/
     ├── capture-evidence.ps1       一键复现并采集全部证据
-    └── render-screenshots.py      把日志渲染成 S1–S8 截图
+    ├── render-screenshots.py      把日志渲染成 S1–S8 截图
+    ├── tui_capture.py             用 ConPTY 抓取 Pi 真实 TUI 画面
+    └── render-tui.py              把 TUI 字节流用 pyte 重建成图片
 ```
 
 ## 复现方式
@@ -478,4 +524,13 @@ powershell -ExecutionPolicy Bypass -File .\tools\capture-evidence.ps1
 
 # 4. 把采集到的日志重新渲染成 S1–S8 截图
 python .\tools\render-screenshots.py
+
+# 5.（可选）抓取 Pi 真实 TUI 画面，生成 S6b / S8b
+python -m pip install pywinpty pyte --index-url https://pypi.org/simple
+python .\tools\tui_capture.py "D:\Github course\pi-test"  raw-ext.txt  clean-ext.txt  45
+python .\tools\tui_capture.py "D:\Github course\study"    raw-skill.txt clean-skill.txt 60 "\r"
+python .\tools\render-tui.py  raw-ext.txt   S6b.png "pi 启动画面（Extensions）"
+python .\tools\render-tui.py  raw-skill.txt S8b.png "pi 启动画面（Skills）"
 ```
+
+> `"\r"` 是给 `Trust project folder?` 提示按 Enter 用的——不信任项目目录，`.pi/skills` 不会被加载。

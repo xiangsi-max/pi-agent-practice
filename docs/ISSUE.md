@@ -1,11 +1,19 @@
-# 实践课1： Pi Agent安装与使用 xiangsi-max
+# 实践课1： Pi Agent安装与使用 luoweicheng
+
+## 基本信息
+
+| 项目 | 内容 |
+| --- | --- |
+| 姓名拼音 | **luoweicheng** |
+| 姓名 | 罗伟城 |
+| GitHub 登录名 | [xiangsi-max](https://github.com/xiangsi-max) |
 
 ## 仓库地址
 
 https://github.com/xiangsi-max/pi-agent-practice
 
 > 完整报告见该仓库的 [README.md](https://github.com/xiangsi-max/pi-agent-practice/blob/main/README.md)，
-> S1–S8 截图见 [docs/screenshots](https://github.com/xiangsi-max/pi-agent-practice/tree/main/docs/screenshots)，
+> 截图见 [docs/screenshots](https://github.com/xiangsi-max/pi-agent-practice/tree/main/docs/screenshots)，
 > 所有终端证据原文见 [docs/logs](https://github.com/xiangsi-max/pi-agent-practice/tree/main/docs/logs)。
 
 ## 完成情况总览
@@ -16,8 +24,8 @@ https://github.com/xiangsi-max/pi-agent-practice
 | 二 | 配置模型 + 最简单会话 | ✅ | S2 ｜ `docs/logs/task2-model-and-session.log` |
 | 三 | 切换模型 + 思考级别 | ✅ | S3 ｜ `docs/logs/task3-model-and-thinking.log` |
 | 四 | @ 引用代码 + 粘贴小图片 | ✅ | S4、S5 ｜ `docs/logs/task4a-*.log`、`task4b-*.log` |
-| 五 | 安装并试用一个插件 | ✅ | S6 ｜ `docs/logs/task5-*.log` |
-| 六 | PPT Skill（选做） | ✅ 已完成 | S7、S8 ｜ `docs/logs/task6-skill.log` |
+| 五 | 安装并试用一个插件 | ✅ | S6、**S6b（加载）** ｜ `docs/logs/task5-*.log` |
+| 六 | PPT Skill（选做） | ✅ 已完成 | S7、S8、**S8b（发现）** ｜ `docs/logs/task6-skill.log` |
 
 ## 环境信息
 
@@ -98,17 +106,30 @@ high       high         deepseek-flash
 
 - 名称：**pi-web-access**（来源 https://pi.dev/packages ）
 - 安装：`pi install npm:pi-web-access` → `added 211 packages`、`Installed npm:pi-web-access`
-- 加载：重启后工具清单中新增 `web_search`、`source_check`、`fetch_content`、`get_search_content`
+- 加载：**重启后 Pi 启动界面的 `[Extensions]` 区域出现 `npm:pi-web-access`**（见 S6b 真实 TUI 截图），
+  工具清单中新增 `web_search`、`source_check`、`fetch_content`、`get_search_content`
 - 试用：提示「请获取 https://example.com 的页面标题」，Pi 调用 `fetch_content`，返回 **Example Domain**
 
 ### 任务六 PPT Skill（选做，已完成）
 
 - 安装到 `D:\Github course\study\.pi\skills\pptx`，共 **58 个文件**，保留
   `SKILL.md`、`LICENSE.txt` 与 `scripts/`
-- 重启后在 `study` 目录执行 `/skill:pptx 请说明这个 Skill 的名称、用途和所在目录，`
+- 重启后在启动界面 `[Skills]` 区域的 `project` 分组下出现
+  `D:\Github course\study\.pi\skills\pptx\SKILL.md`（见 S8b 真实 TUI 截图）
+- 在 `study` 目录执行 `/skill:pptx 请说明这个 Skill 的名称、用途和所在目录，`
   → 正确返回名称 `pptx`、用途及路径 `D:\Github course\study\.pi\skills\pptx\`
 - 补齐依赖（`pptxgenjs`、`python-pptx`）后生成两页 PPT，Skill 自带 `validate.py` 校验
   `All validations PASSED!`，并用 PowerPoint 实际打开、导出两页图片确认可正常显示
+
+### 关于截图
+
+S1–S8 由 `tools/render-screenshots.py` 渲染 `docs/logs/` 中的真实终端日志生成，
+每张图页脚标注来源日志文件，可逐条回查；S6b、S8b 是 Pi 的**真实 TUI 画面**
+（`pywinpty` 开伪终端运行 `pi --verbose`，`pyte` 重建屏幕），原始字节流存于
+`docs/logs/tui-capture-*.raw.txt`。
+
+> 说明：Pi 只在 TTY 下绘制界面，管道里执行 `pi --verbose` 输出 0 字节，
+> 因此「插件/Skill 是否真的加载」必须从真实伪终端的启动界面读取，不能靠安装命令的输出来代替。
 
 ## 未提交的敏感信息
 
