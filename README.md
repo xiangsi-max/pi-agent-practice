@@ -17,11 +17,12 @@
 | 安装路径 | `C:\Users\20349\.pi\agent\bin\pi.cmd` |
 | 模型提供商 | DeepSeek（`deepseek-flash` / `deepseek-v4-pro`） |
 
-## 截图索引 S1–S8
+## 截图索引 S1–S8（含 S6b / S8b 真实 TUI）
 
-八张截图全部位于 [`docs/screenshots/`](docs/screenshots/)，**由 `tools/render-screenshots.py`
-直接渲染 [`docs/logs/`](docs/logs/) 里的真实终端输出生成**，没有手工编辑、拼接或改写任何内容；
-每张图页脚都标注了对应的原始日志文件名，可逐条回查。
+全部截图位于 [`docs/screenshots/`](docs/screenshots/)。其中 **S1–S8** 由
+`tools/render-screenshots.py` 直接渲染 [`docs/logs/`](docs/logs/) 里的真实终端输出生成，
+没有手工编辑、拼接或改写任何内容，每张图页脚都标注了对应的原始日志文件名，可逐条回查；
+**S6b / S8b** 则是 Pi 的真实 TUI 画面（见下方说明）。
 
 | 截图 | 对应任务 | 文件 |
 | --- | --- | --- |
